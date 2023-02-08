@@ -1,0 +1,158 @@
+<style>
+  .inputfont {
+    font-size: 12px !important;
+    font-family: Arial !important;
+  }
+
+  tbody {
+    display: block;
+    height: 100% !important;
+    overflow: auto;
+  }
+
+  tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    margin-bottom: 2px;
+    margin-top: 2px;
+  }
+
+  table {
+    width: 100%;
+  }
+
+  table.highlight>tbody>tr:hover {
+    background-color: rgba(194, 206, 23, 0.5) !important;
+    cursor: pointer;
+  }
+
+  .row {
+    margin-bottom: 0px !important;
+  }
+</style>
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+
+  <!--Let browser know website is optimized for mobile-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.js"></script>
+
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+  <!-- Compiled and minified JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+  <!--Import Google Icon Font-->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body>
+  <div class="row">
+    <div class="input-field col s9">
+      <input id="searchfolder" class="inputfont" type="text" class="validate">
+      <label class="active" for="searchfolder">Folder</label>
+    </div>
+    <div class="input-field col s3">
+      <a class="waves-effect waves-light btn-small" id="btnClear">X</a>
+    </div>
+  </div>
+  <div class="row searchdiv">
+    <div class="input-field col s11">
+      <i class="material-icons prefix">search</i>
+      <input id="searchfiles" class="inputfont" type="text" class="validate">
+      <label class="active" for="searchfiles">Search</label>
+    </div>
+  </div>
+
+  <div id="tablediv" class="responsive-table table-status-sheet">
+    <table class="striped inputfont highlight" id="tablefiles">
+    </table>
+  </div>
+
+  <div id="location" style="display: none;"> </div>
+</body>
+
+</html>
+<script>
+  var arr = [];
+
+  $(function () {
+
+    // google.script.run.withSuccessHandler(importFiles).getSerchedFiles();
+
+    $("#searchfiles").keyup(function () {
+
+      google.script.run.withSuccessHandler(importFiles).getSerchedFiles();
+
+      //console.log(document.getElementById('searchfolder').value)
+      google.script.run.displayToast(document.getElementById('searchfolder').value);
+
+      let inputval = $("#searchfiles").val();
+      $('#tablefiles tr').remove();
+
+      $.each(arr, function (key, value) {
+        if (inputval.length > 0) {
+          var nameinlower = value.name.toString().toLowerCase()
+
+          if (nameinlower.match(inputval.toString().toLowerCase())) {
+
+            $('#tablefiles').append('<tr><td>' + value.name + '</td><td style="display:none;"><input type="text" value =' + value.url + '/></   td></tr>');
+          }
+        }
+        else {
+          $('#tablefiles tr:last').remove();
+        }
+      });
+    });
+
+    $("#btnClear").click(function () {
+      $("#searchfolder").val('');
+      $("#searchfiles").val('');
+      $("#tablefiles tr").remove();
+    });
+
+    // $("#searchfiles").click(function(){
+    //   google.script.run.withSuccessHandler().getSerchedFiles(document.getElementById('searchfolder').value);
+    //   console.log(document.getElementById('searchfolder').value)
+    // });
+
+    $('#tablefiles').on('click', 'tr>td', function (e) {
+      var row = $(this);
+
+      let selectedurl = row.closest("tr").find("td:eq(1)").find('input').val();
+
+      let selectedvalue = $(this).text();
+
+      //  google.script.run.withSuccessHandler(function (result) {
+      //    document.getElementById("location").innerText = `Sheet: ${result.sheet} Range: ${result.range} Value: ${result.value}`;
+      //  }).getLocation(selectedvalue);
+
+      google.script.run.withSuccessHandler().getLocation(selectedvalue);
+    });
+
+  });
+
+  function importFiles(e) {
+    var key = Object.keys(e);
+
+    var alldata = {};
+    arr = [];
+
+    for (var i = 0; i < e[key]["files"].length; i++) {
+      alldata = {
+        name: e[key]["files"][i].name,
+        id: e[key]["files"][i].id,
+        url: e[key]["files"][i].url
+      }
+
+      arr.push(alldata);
+    }
+  }
+</script>
